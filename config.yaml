@@ -1,0 +1,33 @@
+# Optimal execution of a large sell order — experiment configuration.
+#
+# All quantities are NORMALISED: the arrival price S0 = 1 and the order size X = 1.
+# Costs are therefore fractions of the order's notional value; x 1e4 gives basis points.
+# Time is measured in trading days (horizon T = 1 means "finish by market close").
+
+market:
+  n_steps: 25            # decision intervals per episode (375-min NSE session / 25 = 15-min buckets)
+  horizon: 1.0           # T, in trading days
+  sigma: 0.02            # daily price volatility (2%)
+  eta: 0.002             # temporary impact: cost per unit of trading RATE (selling X over 1 day ≈ 20 bps)
+  gamma: 0.001           # permanent impact: price drop per unit sold (selling X shifts price ≈ 10 bps)
+  half_spread: 0.00005   # fixed cost per unit sold (0.5 bps half-spread)
+  risk_aversion: 25.0    # lambda in E[cost] + lambda * Var[cost]; gives kappa*T ≈ 2.25 (clearly front-loaded AC)
+
+signal:
+  # Predictive short-term drift (Experiment B). Disabled = pure Almgren–Chriss world (Experiment A).
+  enabled: false
+  strength: 0.04         # stationary std of the drift (daily-return units): drift per interval ≈ 0.4x the noise
+  phi: 0.8               # AR(1) persistence of the drift from one interval to the next
+  obs_noise: 0.0         # std of noise added to the drift the agent observes (in units of `strength`)
+
+actions:
+  # Discrete action k sells  multiplier[k] * (inventory left / intervals left)  shares.
+  # 1.0 = "TWAP pace from here"; >1 = speed up; <1 = slow down; 0 = wait.
+  multipliers: [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0]
+
+data:
+  csv_dir: data/raw      # NSE 1-minute OHLCV CSVs (see README for the Kaggle source)
+  train_until: "2018-12-31"
+  val_until: "2019-06-30"   # everything after this date is the held-out test set
+
+seed: 0
