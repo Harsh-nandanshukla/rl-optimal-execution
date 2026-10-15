@@ -5,3 +5,4 @@ data/raw/
 logs/
 *.egg-info/
 .ipynb_checkpoints/
+.claude/
