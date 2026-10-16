@@ -51,8 +51,18 @@ At λ = 10 AC beat TWAP by only 1.5 bps (too small to learn or show); at 25 the 
 
 ## Algorithms, evaluation, scope
 
-**D13 — DQN from scratch + PPO from stable-baselines3; CPU only** · Planned
+**D13 — DQN from scratch + PPO from stable-baselines3; CPU only** · Done (DQN) / Planned (PPO)
 **D14 — Paired evaluation on identical paths, 5 seeds, held-out data, CVaR 5%** · Planned
 **D15 — Report: 4 figures + 1 table** (trajectory vs AC, cost–risk frontier, learning curves, ablation) · Planned
 **D16 — No Streamlit demo** · Revoked — not a deliverable; time goes to reproducibility.
-**D17 — 6 Python files; sanity checks inside each file's `__main__`** · Done (4 of 6)
+**D17 — 6 Python files; sanity checks inside each file's `__main__`** · Done (5 of 6)
+
+**D18 — DQN target network: soft update, τ = 0.005 after every learning update** · Done
+Target tracks the online net smoothly instead of jumping every K steps, so TD targets drift gradually.
+Rejected: periodic hard copy (an extra interval to tune; target lurches at each copy).
+
+**D19 — DQN scales rewards by 0.01 internally during learning** · Done
+Env rewards are in bps (one-step Immediate liquidation ≈ −500), so raw Q-values are O(100); scaled
+they are O(1), a convenient range for Huber loss and Adam. With γ = 1, multiplying every reward by a
+positive constant multiplies every return by it, so the optimal policy is unchanged. Env and
+evaluation stay in bps.
