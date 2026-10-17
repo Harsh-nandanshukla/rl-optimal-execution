@@ -5,7 +5,8 @@ Components:
 * ReplayBuffer  — fixed-capacity circular buffer in NumPy arrays, uniform mini-batch sampling.
 * DQNAgent      — epsilon-greedy acting, Double-DQN TD targets, Huber loss, Adam, gradient
                   clipping, soft (Polyak) target-network updates, save/load.
-* train_dqn     — plain interaction loop: act, store, update once per environment step.
+* train_dqn     — plain interaction loop: act, store, update once per environment step; optional
+                  periodic callback receiving a TrainMetrics snapshot.
 
 Design choices (and why):
 * gamma = 1: the episode is a finite 25-step horizon and the episode return is exactly the
@@ -23,6 +24,8 @@ Design choices (and why):
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 import torch
@@ -164,11 +167,34 @@ class DQNAgent:
         self.steps = ckpt["steps"]
 
 
-def train_dqn(agent: DQNAgent, env, total_steps: int, seed: int = 0) -> list[float]:
-    """Interact for `total_steps` environment steps, updating once per step. Returns episode returns."""
+@dataclass
+class TrainMetrics:
+    """Snapshot of training progress handed to the `train_dqn` callback.
+
+    Episode returns are in the env's reward units (bps), NOT the agent's internally scaled units.
+    The recent-return statistics are NaN until the first episode finishes.
+    """
+    step: int                   # environment steps completed in this call to train_dqn (1-based)
+    agent: DQNAgent
+    episodes: int               # episodes completed so far
+    epsilon: float              # exploration rate that will be used for the next action
+    recent_return_mean: float   # mean return of the last `recent_window` completed episodes
+    recent_return_std: float    # their (population) standard deviation
+    recent_window: int          # number of episodes the two statistics above were computed over
+
+
+def train_dqn(agent: DQNAgent, env, total_steps: int, seed: int = 0,
+              callback: Callable[[TrainMetrics], None] | None = None,
+              callback_every: int = 10_000, recent_window: int = 100) -> list[float]:
+    """Interact for `total_steps` environment steps, updating once per step. Returns episode returns.
+
+    If `callback` is given it is called with a TrainMetrics after every `callback_every` steps and
+    after the final step (used by train.py for periodic validation and checkpointing). The callback
+    must not touch `env` or the agent's exploration RNG, so training is identical with or without it.
+    """
     obs, _ = env.reset(seed=seed)
     returns, ep_return = [], 0.0
-    for _ in range(total_steps):
+    for t in range(1, total_steps + 1):
         action = agent.act(obs, greedy=False)
         next_obs, reward, terminated, truncated, _ = env.step(action)
         agent.buffer.add(obs, action, reward, next_obs, terminated)   # truncation would still bootstrap
@@ -179,7 +205,16 @@ def train_dqn(agent: DQNAgent, env, total_steps: int, seed: int = 0) -> list[flo
         if terminated or truncated:
             returns.append(ep_return)
             obs, ep_return = env.reset()[0], 0.0
+        if callback is not None and (t % callback_every == 0 or t == total_steps):
+            callback(_metrics(t, agent, returns, recent_window))
     return returns
+
+
+def _metrics(step: int, agent: DQNAgent, returns: list[float], window: int) -> TrainMetrics:
+    recent = returns[-window:]
+    mean, std = (float(np.mean(recent)), float(np.std(recent))) if recent else (float("nan"),) * 2
+    return TrainMetrics(step=step, agent=agent, episodes=len(returns), epsilon=agent.epsilon,
+                        recent_return_mean=mean, recent_return_std=std, recent_window=len(recent))
 
 
 # ----------------------------------------------------------------------------- self-check
@@ -253,6 +288,30 @@ if __name__ == "__main__":
     for t0, p, t1 in zip(target_before, agent.q.parameters(), agent.q_target.parameters()):
         assert torch.allclose(t1, (1 - tau) * t0 + tau * p.detach())
     print(f"training update: loss {loss:.4f} finite, online net changed, soft target update OK")
+
+    # 5b. Callback: fires on schedule with correct metrics, and leaves training bit-for-bit unchanged.
+    short = 2_510                                          # not a multiple of the interval -> final call too
+    set_seed(SEED)
+    plain = DQNAgent(obs_dim, n_actions, seed=SEED)
+    plain_returns = train_dqn(plain, env, short, seed=SEED)
+    set_seed(SEED)
+    hooked = DQNAgent(obs_dim, n_actions, seed=SEED)
+    seen: list[TrainMetrics] = []
+    hooked_returns = train_dqn(hooked, env, short, seed=SEED, callback=seen.append, callback_every=1_000,
+                               recent_window=50)
+    assert [m.step for m in seen] == [1_000, 2_000, short], [m.step for m in seen]
+    n_ep = env.N                                           # every episode lasts exactly N steps
+    assert [m.episodes for m in seen] == [s // n_ep for s in (1_000, 2_000, short)]
+    assert all(m.agent is hooked for m in seen)
+    eps = hooked.hp["eps_start"] + np.array([1_000, 2_000, short]) / hooked.hp["eps_decay_steps"] \
+        * (hooked.hp["eps_end"] - hooked.hp["eps_start"])
+    assert np.allclose([m.epsilon for m in seen], eps)
+    last = seen[-1]
+    assert last.recent_window == 50 and np.isclose(last.recent_return_mean, np.mean(hooked_returns[-50:]))
+    assert np.isclose(last.recent_return_std, np.std(hooked_returns[-50:]))
+    assert plain_returns == hooked_returns, "callback changed the training trajectory"
+    assert all(torch.equal(a, b) for a, b in zip(plain.q.parameters(), hooked.q.parameters()))
+    print(f"callback: fired at steps {[m.step for m in seen]}, metrics correct, training unchanged by callback")
 
     # 6. Real training run with a fixed seed and a bounded CPU budget.
     set_seed(SEED)
