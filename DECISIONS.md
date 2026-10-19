@@ -51,7 +51,8 @@ At λ = 10 AC beat TWAP by only 1.5 bps (too small to learn or show); at 25 the 
 
 ## Algorithms, evaluation, scope
 
-**D13 — DQN from scratch + PPO from stable-baselines3; CPU only** · Done (DQN) / Planned (PPO)
+**D13 — DQN from scratch + PPO from stable-baselines3; CPU only** · Done (DQN) / Done (PPO implemented, smoke-tested)
+TA confirmed (Oct 2026) that stable-baselines3 is allowed for PPO. DQN stays our own code; PPO is the library reference.
 **D14 — Paired evaluation on identical paths, 5 seeds, held-out data, CVaR 5%** · Planned
 **D15 — Report: 4 figures + 1 table** (trajectory vs AC, cost–risk frontier, learning curves, ablation) · Planned
 **D16 — No Streamlit demo** · Revoked — not a deliverable; time goes to reproducibility.
@@ -66,3 +67,19 @@ Env rewards are in bps (one-step Immediate liquidation ≈ −500), so raw Q-val
 they are O(1), a convenient range for Huber loss and Adam. With γ = 1, multiplying every reward by a
 positive constant multiplies every return by it, so the optimal policy is unchanged. Env and
 evaluation stay in bps.
+
+**D20 — Fixed validation/test path sets; checkpoint = best greedy validation objective** · Done
+Synthetic val paths from `evaluation.val_seed` (100000), test from `test_seed` (200000), both far from training
+seeds 0, 1, … . Score = mean(is_bps + risk_bps) on realised IS, unscaled; 95% CI = 1.96·s/√n over paths.
+Real data uses the existing date split. Rejected: selecting on training return (noisy, biased by shaping).
+The CI covers path noise only, not training-seed variance, and the best checkpoint is optimistic on the set that
+picked it, so reported comparisons come from the test set and multiple seeds, never from validation.
+
+**D21 — PPO: same Discrete(12) actions as DQN, fixed hyperparameters, 0.01 reward wrapper** · Done (implemented, smoke-tested) / Planned (experiments)
+γ = 1, 128×128 ReLU pi/vf, n_steps = 2000 (80 episodes), batch 100, 10 epochs, lr 3e-4, clip 0.2, GAE 0.95,
+ent 0. Fixed in advance so DQN vs PPO is not a tuning contest. SB3 use confirmed by the TA (D13).
+
+**D22 — PPO is validated between rollouts, not during them** · Done
+SB3 calls `on_step` while collecting a rollout, before the update on it, so validating there scored a policy one
+rollout behind its step label and never scored the final update. Now validated at rollout start (after `train()`)
+and at training end; PPO `--steps` and `--eval-every` must be multiples of n_steps = 2000.

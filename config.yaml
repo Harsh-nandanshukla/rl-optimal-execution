@@ -30,4 +30,14 @@ data:
   train_until: "2018-12-31"
   val_until: "2019-06-30"   # everything after this date is the held-out test set
 
+evaluation:
+  # Fixed synthetic path sets for scoring policies (realised IS, unscaled bps). The seeds are far
+  # from the training seeds (0, 1, 2, ...) and from each other, so checkpoint selection (val) and
+  # final reporting (test) never see training paths or each other's paths. Every run with the same
+  # signal setting is validated on the identical set. Real data uses the date split above instead.
+  val_seed: 100000
+  test_seed: 200000
+  n_val_paths: 1000      # train.py default; --n-val overrides
+  n_test_paths: 10000    # for evaluate.py (not used by train.py)
+
 seed: 0
