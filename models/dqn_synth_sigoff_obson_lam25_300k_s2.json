@@ -1,0 +1,165 @@
+{
+  "run_name": "dqn_synth_sigoff_obson_lam25_300k_s2",
+  "algo": "dqn",
+  "mode": "synthetic",
+  "signal": false,
+  "observe_signal": true,
+  "lam": 25.0,
+  "seed": 2,
+  "steps": 300000,
+  "eval_every": 10000,
+  "n_val": 1000,
+  "n_val_actual": 1000,
+  "train_reward_mode": "expected",
+  "eval_reward_mode": "realized",
+  "val_seed": 100000,
+  "val_source": "synthetic val_seed",
+  "objective": "mean over validation paths of is_bps + risk_bps (realised IS + lambda-weighted risk, bps)",
+  "ci95": "95% CI half-width of the mean over paths: 1.96 * sample std (ddof=1) / sqrt(n_paths)",
+  "checkpoint": "dqn_synth_sigoff_obson_lam25_300k_s2.pt",
+  "learning_curve": "dqn_synth_sigoff_obson_lam25_300k_s2.csv",
+  "best": {
+    "step": 180000,
+    "episodes": 7200,
+    "epsilon": 0.050000000000000044,
+    "train_return_mean": -50.011655739617375,
+    "train_return_std": 1.1429755752760533,
+    "val_is_mean": 35.521592140470084,
+    "val_obj_mean": 53.64701142573039,
+    "val_obj_ci95": 5.375718353827672,
+    "val_gap_ac_mean": 0.10270691496350573,
+    "val_gap_ac_ci95": 0.07793871033651079,
+    "best_val_obj": 53.64701142573039,
+    "is_best": 1,
+    "wall_s": 484.19
+  },
+  "final": {
+    "step": 300000,
+    "episodes": 12000,
+    "epsilon": 0.050000000000000044,
+    "train_return_mean": -50.062542788185844,
+    "train_return_std": 1.119096572785457,
+    "val_is_mean": 35.31430564984809,
+    "val_obj_mean": 54.223647819646,
+    "val_obj_ci95": 5.492949515441109,
+    "val_gap_ac_mean": 0.6793433088790992,
+    "val_gap_ac_ci95": 0.20982492370223785,
+    "best_val_obj": 53.64701142573039,
+    "is_best": 0,
+    "wall_s": 828.2
+  },
+  "episodes": 12000,
+  "reload_check_abs_diff_bps": 0.0,
+  "baselines_val": {
+    "Immediate": {
+      "obj_mean": 500.5000000000002,
+      "obj_ci95": 1.057486356145829e-14,
+      "is_mean": 500.5000000000002
+    },
+    "TWAP": {
+      "obj_mean": 63.160827739741364,
+      "obj_ci95": 7.069161900925226,
+      "is_mean": 31.80082773974135
+    },
+    "VWAP": {
+      "obj_mean": 63.123950706899834,
+      "obj_ci95": 6.854798003086241,
+      "is_mean": 33.75773948076312
+    },
+    "Almgren-Chriss": {
+      "obj_mean": 53.54430451076689,
+      "obj_ci95": 5.434348681751303,
+      "is_mean": 35.01143595880734
+    }
+  },
+  "hyperparameters": {
+    "obs_dim": 4,
+    "n_actions": 12,
+    "hidden": 128,
+    "lr": 0.0005,
+    "gamma": 1.0,
+    "batch_size": 64,
+    "buffer_size": 100000,
+    "learning_starts": 1000,
+    "tau": 0.005,
+    "grad_clip": 10.0,
+    "eps_start": 1.0,
+    "eps_end": 0.05,
+    "eps_decay_steps": 20000,
+    "reward_scale": 0.01,
+    "seed": 2
+  },
+  "resolved_config": {
+    "market": {
+      "n_steps": 25,
+      "horizon": 1.0,
+      "sigma": 0.02,
+      "eta": 0.002,
+      "gamma": 0.001,
+      "half_spread": 5e-05,
+      "risk_aversion": 25.0
+    },
+    "signal": {
+      "enabled": false,
+      "strength": 0.04,
+      "phi": 0.8,
+      "obs_noise": 0.0
+    },
+    "actions": {
+      "multipliers": [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0,
+        1.25,
+        1.5,
+        1.75,
+        2.0,
+        2.5,
+        3.0,
+        4.0
+      ]
+    },
+    "data": {
+      "csv_dir": "data/raw",
+      "train_until": "2018-12-31",
+      "val_until": "2019-06-30"
+    },
+    "evaluation": {
+      "val_seed": 100000,
+      "test_seed": 200000,
+      "n_val_paths": 1000,
+      "n_test_paths": 10000
+    },
+    "seed": 0
+  },
+  "command": [
+    "train.py",
+    "--algo",
+    "dqn",
+    "--mode",
+    "synthetic",
+    "--signal",
+    "off",
+    "--observe-signal",
+    "on",
+    "--lam",
+    "25",
+    "--seed",
+    "2",
+    "--steps",
+    "300000",
+    "--eval-every",
+    "10000"
+  ],
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "torch": "2.14.1+cpu",
+    "gymnasium": "1.4.0"
+  },
+  "timing": {
+    "train_wall_s": 828.19
+  }
+}

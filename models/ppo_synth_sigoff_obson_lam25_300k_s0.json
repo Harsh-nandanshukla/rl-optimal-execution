@@ -1,0 +1,181 @@
+{
+  "run_name": "ppo_synth_sigoff_obson_lam25_300k_s0",
+  "algo": "ppo",
+  "mode": "synthetic",
+  "signal": false,
+  "observe_signal": true,
+  "lam": 25.0,
+  "seed": 0,
+  "steps": 300000,
+  "eval_every": 10000,
+  "n_val": 1000,
+  "n_val_actual": 1000,
+  "train_reward_mode": "expected",
+  "eval_reward_mode": "realized",
+  "val_seed": 100000,
+  "val_source": "synthetic val_seed",
+  "objective": "mean over validation paths of is_bps + risk_bps (realised IS + lambda-weighted risk, bps)",
+  "ci95": "95% CI half-width of the mean over paths: 1.96 * sample std (ddof=1) / sqrt(n_paths)",
+  "checkpoint": "ppo_synth_sigoff_obson_lam25_300k_s0.zip",
+  "learning_curve": "ppo_synth_sigoff_obson_lam25_300k_s0.csv",
+  "best": {
+    "step": 140000,
+    "episodes": 5600,
+    "epsilon": "",
+    "train_return_mean": -49.19085920544231,
+    "train_return_std": 0.026621265635015566,
+    "val_is_mean": 34.78692666665479,
+    "val_obj_mean": 53.59204261024554,
+    "val_obj_ci95": 5.472012794819654,
+    "val_gap_ac_mean": 0.04773809947865605,
+    "val_gap_ac_ci95": 0.10061191935525843,
+    "best_val_obj": 53.59204261024554,
+    "is_best": 1,
+    "wall_s": 214.31
+  },
+  "final": {
+    "step": 300000,
+    "episodes": 12000,
+    "epsilon": "",
+    "train_return_mean": -49.161236320797286,
+    "train_return_std": 0.04124090148980985,
+    "val_is_mean": 34.640250614984225,
+    "val_obj_mean": 53.69746224424254,
+    "val_obj_ci95": 5.510297634150713,
+    "val_gap_ac_mean": 0.153157733475643,
+    "val_gap_ac_ci95": 0.08583436665827938,
+    "best_val_obj": 53.59204261024554,
+    "is_best": 0,
+    "wall_s": 442.34
+  },
+  "episodes": 12000,
+  "reload_check_abs_diff_bps": 0.0,
+  "baselines_val": {
+    "Immediate": {
+      "obj_mean": 500.5000000000002,
+      "obj_ci95": 1.057486356145829e-14,
+      "is_mean": 500.5000000000002
+    },
+    "TWAP": {
+      "obj_mean": 63.160827739741364,
+      "obj_ci95": 7.069161900925226,
+      "is_mean": 31.80082773974135
+    },
+    "VWAP": {
+      "obj_mean": 63.123950706899834,
+      "obj_ci95": 6.854798003086241,
+      "is_mean": 33.75773948076312
+    },
+    "Almgren-Chriss": {
+      "obj_mean": 53.54430451076689,
+      "obj_ci95": 5.434348681751303,
+      "is_mean": 35.01143595880734
+    }
+  },
+  "hyperparameters": {
+    "learning_rate": 0.0003,
+    "n_steps": 2000,
+    "batch_size": 100,
+    "n_epochs": 10,
+    "gamma": 1.0,
+    "gae_lambda": 0.95,
+    "clip_range": 0.2,
+    "ent_coef": 0.0,
+    "vf_coef": 0.5,
+    "max_grad_norm": 0.5,
+    "normalize_advantage": true,
+    "policy": "MlpPolicy",
+    "policy_kwargs": {
+      "net_arch": {
+        "pi": [
+          128,
+          128
+        ],
+        "vf": [
+          128,
+          128
+        ]
+      },
+      "activation_fn": "ReLU"
+    },
+    "reward_scale": 0.01,
+    "seed": 0,
+    "n_envs": 1,
+    "device": "cpu",
+    "sb3_version": "2.9.0"
+  },
+  "resolved_config": {
+    "market": {
+      "n_steps": 25,
+      "horizon": 1.0,
+      "sigma": 0.02,
+      "eta": 0.002,
+      "gamma": 0.001,
+      "half_spread": 5e-05,
+      "risk_aversion": 25.0
+    },
+    "signal": {
+      "enabled": false,
+      "strength": 0.04,
+      "phi": 0.8,
+      "obs_noise": 0.0
+    },
+    "actions": {
+      "multipliers": [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0,
+        1.25,
+        1.5,
+        1.75,
+        2.0,
+        2.5,
+        3.0,
+        4.0
+      ]
+    },
+    "data": {
+      "csv_dir": "data/raw",
+      "train_until": "2018-12-31",
+      "val_until": "2019-06-30"
+    },
+    "evaluation": {
+      "val_seed": 100000,
+      "test_seed": 200000,
+      "n_val_paths": 1000,
+      "n_test_paths": 10000
+    },
+    "seed": 0
+  },
+  "command": [
+    "train.py",
+    "--algo",
+    "ppo",
+    "--mode",
+    "synthetic",
+    "--signal",
+    "off",
+    "--observe-signal",
+    "on",
+    "--lam",
+    "25",
+    "--seed",
+    "0",
+    "--steps",
+    "300000",
+    "--eval-every",
+    "10000",
+    "--overwrite"
+  ],
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "torch": "2.14.1+cpu",
+    "gymnasium": "1.4.0"
+  },
+  "timing": {
+    "train_wall_s": 442.35
+  }
+}
