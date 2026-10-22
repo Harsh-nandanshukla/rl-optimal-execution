@@ -90,6 +90,17 @@ def resolve_config(cfg: dict, spec: RunSpec, data_dir: str | None = None) -> dic
     return out
 
 
+def portable_config(cfg: dict) -> dict:
+    """Copy for committed metadata: data.csv_dir relative to the repo, so no local absolute path is recorded.
+    Loading still uses the absolute path from resolve_config; this only changes what is written down."""
+    out = copy.deepcopy(cfg)
+    try:
+        out["data"]["csv_dir"] = os.path.relpath(out["data"]["csv_dir"], HERE).replace(os.sep, "/")
+    except ValueError:                               # Windows: a --data-dir on another drive has no relative path
+        pass
+    return out
+
+
 class DataError(RuntimeError):
     """Real-data input is missing or unusable. Never fall back to fabricated data."""
 
@@ -123,28 +134,31 @@ def validation_paths(cfg: dict, spec: RunSpec, split: str = "val") -> list:
 
 # ----------------------------------------------------------------------------- evaluation (reusable)
 def evaluate_policy(env: ExecutionEnv, act, paths: list, seed: int) -> dict[str, np.ndarray]:
-    """Run `act(obs) -> action` greedily on every path; return per-path is_bps, risk_bps, objective.
+    """Run `act(obs) -> action` greedily on every path; return per-path is_bps, risk_bps, objective
+    and holdings (n_paths x N+1: inventory left before each decision, then 0 after the last).
 
     `env` must use reward_mode="realized". Each reset is seeded (seed + i) so evaluation is a pure
     function of (policy, paths), whatever ran before. Also checks the identity return == -objective.
     """
     assert env.reward_mode == "realized", "evaluation must use realised rewards"
     is_bps, risk_bps = np.empty(len(paths)), np.empty(len(paths))
+    holdings = np.empty((len(paths), env.N + 1))
     for i, path in enumerate(paths):
         obs, _ = env.reset(seed=seed + i, options={"path": path})
         done, ret, info = False, 0.0, {}
         while not done:
             obs, r, done, _, info = env.step(act(obs))
             ret += r
-        is_bps[i], risk_bps[i] = info["is_bps"], info["risk_bps"]
+        is_bps[i], risk_bps[i], holdings[i] = info["is_bps"], info["risk_bps"], info["holdings"]
         assert abs(ret + is_bps[i] + risk_bps[i]) < 1e-6, "episode return != -(IS + risk)"
-    return {"is_bps": is_bps, "risk_bps": risk_bps, "objective": is_bps + risk_bps}
+    return {"is_bps": is_bps, "risk_bps": risk_bps, "objective": is_bps + risk_bps, "holdings": holdings}
 
 
 def evaluate_schedule(env: ExecutionEnv, holdings: np.ndarray, paths: list) -> dict[str, np.ndarray]:
     res = [run_schedule(env, holdings, path=p) for p in paths]
     is_bps, risk_bps = np.array([r["is_bps"] for r in res]), np.array([r["risk_bps"] for r in res])
-    return {"is_bps": is_bps, "risk_bps": risk_bps, "objective": is_bps + risk_bps}
+    return {"is_bps": is_bps, "risk_bps": risk_bps, "objective": is_bps + risk_bps,
+            "holdings": np.stack([r["holdings"] for r in res])}
 
 
 def summarize(x: np.ndarray) -> tuple[float, float]:
@@ -351,7 +365,7 @@ def run(spec: RunSpec, base_cfg: dict, out_dir: str = HERE, data_dir: str | None
         "reload_check_abs_diff_bps": reload_diff,
         "baselines_val": {k: dict(zip(("obj_mean", "obj_ci95"), summarize(v["objective"])),
                                   is_mean=float(v["is_bps"].mean())) for k, v in baselines.items()},
-        "hyperparameters": hp, "resolved_config": cfg, "command": sys.argv,
+        "hyperparameters": hp, "resolved_config": portable_config(cfg), "command": sys.argv,
         "versions": {"python": platform.python_version(), "numpy": np.__version__, "torch": torch.__version__,
                      "gymnasium": gym.__version__},
         "timing": {"train_wall_s": round(wall, 2)},          # the only non-deterministic field
@@ -451,6 +465,16 @@ def self_check() -> None:
         if isinstance(m, dict) else m                                     # drop wall-clock fields only
     metas = [_clean(m) for m in metas]
     assert strip(metas[0]) == strip(metas[1]) and curves[0] == curves[1], "seeded runs differ"
+    assert metas[0]["resolved_config"]["data"]["csv_dir"] == "data/raw", "metadata must not record absolute paths"
+
+    # 3. Evaluation helpers return per-path holdings consistent with the env (start at 1, end at 0, never rise).
+    rcfg = resolve_config(cfg, spec)
+    env, paths = make_env(rcfg, spec, SyntheticPathSampler(rcfg), "realized"), validation_paths(rcfg, spec)[:20]
+    for res in (evaluate_policy(env, lambda o: 4, paths, 0), evaluate_schedule(env, all_baselines(rcfg)["TWAP"], paths)):
+        h = res["holdings"]
+        assert h.shape == (20, env.N + 1) and (h[:, 0] == 1).all() and (h[:, -1] == 0).all()
+        assert (np.diff(h, axis=1) <= 0).all()
+    print("metadata stores csv_dir relative to the repo; evaluation helpers return valid per-path holdings")
     print("tiny run: artifacts and CSV columns OK, checkpoint reload reproduces best score, repeat run identical")
     print("\ntrain.py self-check passed.")
 
