@@ -1,0 +1,98 @@
+{
+  "experiment": "A",
+  "commit": "c9bdc57b0372f7c9135773906b50dc5507472fd2",
+  "runs": [
+    "dqn_synth_sigoff_obson_lam25_300k_s0",
+    "dqn_synth_sigoff_obson_lam25_300k_s1",
+    "dqn_synth_sigoff_obson_lam25_300k_s2",
+    "dqn_synth_sigoff_obson_lam25_300k_s3",
+    "dqn_synth_sigoff_obson_lam25_300k_s4",
+    "ppo_synth_sigoff_obson_lam25_300k_s0",
+    "ppo_synth_sigoff_obson_lam25_300k_s1",
+    "ppo_synth_sigoff_obson_lam25_300k_s2",
+    "ppo_synth_sigoff_obson_lam25_300k_s3",
+    "ppo_synth_sigoff_obson_lam25_300k_s4"
+  ],
+  "files": {
+    "models/dqn_synth_sigoff_obson_lam25_300k_s0.pt": "6f7ffcf7e49581d7c9aa8207b03fef8a809ce026b1090c2591295fd5d58b77e2",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s0.json": "82556bef0da1c1f3d8adf0b67fce0c57b7642e296da11ab21b65edd0325b4044",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s1.pt": "4da5f3f0d81d36186baf6315e3da241341604f16a5a563fd003a60b1651e7cff",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s1.json": "6e372c7a614067bf26bfa58d67f24c58bcd8b8600f3075d01ca5740b1624ae4e",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s2.pt": "57cae59fbc2bca115c4aa07dbb454a3fdf542cae2f3b70933ee645c3b322d46c",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s2.json": "215d9ab85f371918021a618383363ebae33be25a675f0c8f15c0db9127cc91f2",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s3.pt": "0336c26bafb243f7096441be7885bf6a3630ae2a39c7f66aa18ddb38ccb64dcb",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s3.json": "010755cab2b40e62dae55d04f9261d2a9b23d64b8933f40af099cb563c66326f",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s4.pt": "5948c06d5e3975379aa219e5f5e797c5875f40adc5350b67bb299296a54dab4e",
+    "models/dqn_synth_sigoff_obson_lam25_300k_s4.json": "01e5835b0d6b4596756e91132c57e93b98099950ce632e8763d96e5b2fad6922",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s0.zip": "71e85f1ae6437a07aa8efc1f8ca8b952741aee6c2c89c928292f741f7ef90a04",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s0.json": "b588c89f229640cd47247f755109b3caec997d9cce88d10e9368c4898ed300ab",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s1.zip": "960a7ad100b63135711b75824507d275b12fc3c47f9c396c0b190ebae3fd1d36",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s1.json": "11c725017696d6afa38837638756ff1b45765836a8e170415a242ab8a470c42d",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s2.zip": "f95506d71ed6761bf928ebbf642434523543a3f7ceb3929d3f757e84b6f3466e",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s2.json": "d3de930de0457595b36a228fa4fe7bbc66e46985232f87fb815a37959d93729f",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s3.zip": "95758ca2db7489814c4e0d8bd3774eacc4339fa14690c863507581dddc46a0fb",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s3.json": "5e3a86644dbe9f63435eaaf186295eaefdfd618063afca4ea54fca667b4790a5",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s4.zip": "14e1a74acd2eb43fa6dda69c7d5770281b0c28b620cabe464f11b032ce3c3848",
+    "models/ppo_synth_sigoff_obson_lam25_300k_s4.json": "b5c1a32943394734a2bbcb263b0fe6c63322cc7207e3b70e88909e02ad08b30a",
+    "data.py": "53dcffbddc9e4d67c9e06f7c0edd50b48aad141f890933529190956a7b931221",
+    "env.py": "74906765f6a3893069c70965c317f801992cd618e9fd9231f9b49ae2911dda5a",
+    "baselines.py": "f29f62d79aac6cada38e988ab3a61c06d3df7565fe29540e866c1862241eb4e9",
+    "dqn.py": "88d5f5e4b90d66ad6f22d883d9a4c91a0e622b3d178079bcf21c8ecd010a9235",
+    "train.py": "ce18b8f4ade6ab322cd831d4b3ff62b68af49e686e96a2d4091de80bb4ef5bd8",
+    "evaluate.py": "75227dbfc4bc4b8589dc382788a804761488fcdad8df5797c0a126d0f331abbd",
+    "config.yaml": "dff6374041b196e8ddfc876fc52d7fd57972ef6c745ec62ab53fbfaeae82d73f",
+    "requirements.txt": "76a826adc26f5e511919ecc9fe848dd652821086a1c153a3ba210bf44b08251f"
+  },
+  "hash_rule": "SHA-256 that survives Git line-ending conversion (core.autocrlf): JSON is hashed in canonical form, other text with LF line endings, binaries (.pt, .zip) byte for byte.",
+  "test_seed": 200000,
+  "n_test_paths": 10000,
+  "config": {
+    "market": {
+      "n_steps": 25,
+      "horizon": 1.0,
+      "sigma": 0.02,
+      "eta": 0.002,
+      "gamma": 0.001,
+      "half_spread": 5e-05,
+      "risk_aversion": 25.0
+    },
+    "actions": {
+      "multipliers": [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0,
+        1.25,
+        1.5,
+        1.75,
+        2.0,
+        2.5,
+        3.0,
+        4.0
+      ]
+    },
+    "signal": {
+      "enabled": false,
+      "strength": 0.04,
+      "phi": 0.8,
+      "obs_noise": 0.0
+    },
+    "evaluation": {
+      "val_seed": 100000,
+      "test_seed": 200000,
+      "n_val_paths": 1000,
+      "n_test_paths": 10000
+    }
+  },
+  "versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "PyYAML": "6.0.3",
+    "gymnasium": "1.4.0",
+    "matplotlib": "3.11.2",
+    "torch": "2.14.1",
+    "stable_baselines3": "2.9.0",
+    "python": "3.12.3"
+  }
+}
