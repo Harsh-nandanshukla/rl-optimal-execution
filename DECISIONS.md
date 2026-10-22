@@ -56,7 +56,7 @@ TA confirmed (Oct 2026) that stable-baselines3 is allowed for PPO. DQN stays our
 **D14 — Paired evaluation on identical paths, 5 seeds, held-out data, CVaR 5%** · Planned
 **D15 — Report: 4 figures + 1 table** (trajectory vs AC, cost–risk frontier, learning curves, ablation) · Planned
 **D16 — No Streamlit demo** · Revoked — not a deliverable; time goes to reproducibility.
-**D17 — 6 Python files; sanity checks inside each file's `__main__`** · Done (5 of 6)
+**D17 — 6 Python files; sanity checks inside each file's `__main__`** · Done (6 of 6)
 
 **D18 — DQN target network: soft update, τ = 0.005 after every learning update** · Done
 Target tracks the online net smoothly instead of jumping every K steps, so TD targets drift gradually.
@@ -83,3 +83,27 @@ ent 0. Fixed in advance so DQN vs PPO is not a tuning contest. SB3 use confirmed
 SB3 calls `on_step` while collecting a rollout, before the update on it, so validating there scored a policy one
 rollout behind its step label and never scored the final update. Now validated at rollout start (after `train()`)
 and at training end; PPO `--steps` and `--eval-every` must be multiples of n_steps = 2000.
+
+**D23 — Discretised-AC references on the 12-action grid** · Done
+RL can only pick the 12 multipliers, so continuous AC is not exactly reachable. *Tracking* (primary): at each
+decision pick the action whose actual trade is closest to x_k − x_AC[k+1] (+0.26 bps vs AC, holdings RMSE 0.0028).
+*Open-loop* (extra row): closest to x_AC[k] − x_AC[k+1] (+0.09 bps, RMSE 0.0097). Both are quantisation
+references, **not lower bounds**: open-loop tracks worse yet scores better, so the grid optimum is unknown.
+
+**D24 — Experiment A statistics: paired per-seed CIs, separate across-seed t-interval** · Done (implemented)
+Per seed: paired per-path differences vs AC / both dAC / TWAP, 95% CI = 1.96·sd/√n (path noise only). Across
+5 seeds: mean ± sd and t-interval (t₀.₉₇₅,₄ = 2.776) of the per-seed means (training variability). Never pool all
+paths across seeds as the headline interval. Trajectory: inventory before each of the 25 decisions,
+RMSE² = bias² + dispersion² (shape error vs reacting to noise). Also CVaR 5% of IS, capture (TWAP−RL)/(TWAP−AC).
+For adaptive policies the pathwise risk penalty is not Var[IS]; sd of IS is reported alongside.
+
+**D25 — Tracked `results/`, integrity-checked freeze manifest** · Done (implemented) / Planned (freeze)
+`results/expA_*` (summary, seed aggregate, trajectories, per-path IS/risk, per-path holdings, run info) and
+`figures/expA_trajectories.*` are committed. `--split test` runs only after `results/expA_manifest.json` verifies:
+commit, run list, SHA-256 of all checkpoints, metadata and code (JSON canonical, text LF-normalised, so
+`core.autocrlf` cannot break it), config and test seed. Order: verify runs → commit models + code → freeze →
+commit manifest → test once. Re-running on unchanged frozen files reproduces, it does not re-use the test set.
+
+**D26 — `evaluate.py` moved from Day 6 to Day 3** · Done
+Evaluation code (and its test-set guard) is written and self-checked before any expensive training, so the
+held-out evaluation is a fixed procedure rather than a script written after seeing results.
