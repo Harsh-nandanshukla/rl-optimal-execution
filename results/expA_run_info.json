@@ -1,0 +1,37 @@
+{
+  "experiment": "A",
+  "split": "test",
+  "path_seed": 200000,
+  "n_paths": 10000,
+  "models_dir": "models",
+  "runs": [
+    "dqn_synth_sigoff_obson_lam25_300k_s0",
+    "dqn_synth_sigoff_obson_lam25_300k_s1",
+    "dqn_synth_sigoff_obson_lam25_300k_s2",
+    "dqn_synth_sigoff_obson_lam25_300k_s3",
+    "dqn_synth_sigoff_obson_lam25_300k_s4",
+    "ppo_synth_sigoff_obson_lam25_300k_s0",
+    "ppo_synth_sigoff_obson_lam25_300k_s1",
+    "ppo_synth_sigoff_obson_lam25_300k_s2",
+    "ppo_synth_sigoff_obson_lam25_300k_s3",
+    "ppo_synth_sigoff_obson_lam25_300k_s4"
+  ],
+  "baselines": [
+    "AC",
+    "dAC-tracking",
+    "dAC-open-loop",
+    "TWAP",
+    "Immediate"
+  ],
+  "definitions": "* objective      = is_bps + risk_bps per path (realised IS + realised lambda-weighted risk penalty) = -return.\n                   For a static schedule its mean estimates E[IS] + lambda Var[IS]. For an adaptive policy the\n                   pathwise penalty lambda sigma^2 tau sum x_k^2 is NOT the variance of realised IS (sd is reported too).\n* paired gap     = mean over paths of (objective_RL - objective_ref) on identical paths; 95% CI = 1.96 sd / sqrt(n).\n                   Answers: is THIS trained agent better or worse than the reference, beyond price-path noise?\n* across seeds   = mean, sd (ddof 1) and t-interval mean +- t(0.975, n-1) sd / sqrt(n) of the per-seed means.\n                   Answers: what should we expect from re-running training? With n = 5 seeds it is wide, honestly so.\n* trajectory     = normalised inventory x_k before each of the N = 25 decisions (k = 0..24), error e_ik = x_ik - ref_k.\n                   RMSE^2 = mean_ik e^2 = bias^2 + dispersion^2, with bias^2 = mean_k (mean_i e_ik)^2 (systematic shape\n                   error) and dispersion^2 = mean_k var_i(e_ik) (path-to-path reaction, ddof 0).\n* CVaR 5% of IS  = mean of the ceil(0.05 n) largest is_bps values.\n* capture        = (obj_TWAP - obj_RL) / (obj_TWAP - obj_AC), means over the same paths; 1 = all of AC's gain over TWAP.",
+  "caution": null,
+  "versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "PyYAML": "6.0.3",
+    "gymnasium": "1.4.0",
+    "matplotlib": "3.11.2",
+    "torch": "2.14.1",
+    "stable_baselines3": "2.9.0"
+  }
+}
