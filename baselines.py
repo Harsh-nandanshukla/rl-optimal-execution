@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from data import intraday_volume_profile, load_config
+from data import PricePath, intraday_volume_profile, load_config
 from env import BPS, ExecutionEnv
 
 
@@ -85,6 +85,47 @@ def run_schedule(env: ExecutionEnv, holdings: np.ndarray, path=None, seed=None) 
     return info
 
 
+# ----------------------------------------------------------------------------- discretised AC
+# The RL agents can only pick one of the 12 multipliers, so continuous AC is not exactly reachable.
+# These two policies show what following AC costs on that same action grid. They are reference
+# baselines, NOT lower bounds: some other 12-action sequence may score better than either.
+DISCRETE_AC_RULES = ("tracking", "open-loop")
+
+
+def discretised_ac_action(env: ExecutionEnv, target: np.ndarray, rule: str = "tracking") -> int:
+    """Index of the action whose ACTUAL trade is closest to the AC trade wanted at the current decision.
+
+    tracking  : wanted trade = x_k - target[k+1]   (steer back onto the AC holdings; errors do not pile up)
+    open-loop : wanted trade = target[k] - target[k+1]   (copy AC's planned trade, ignore past error)
+    Candidates use the env's own mapping (multiplier * x / steps left) and its clip to the inventory left.
+    The env still force-sells everything at the last decision, whatever action is returned.
+    """
+    if rule not in DISCRETE_AC_RULES:
+        raise ValueError(rule)
+    k, x = env.k, env.x
+    candidates = np.minimum(env.multipliers * x / (env.N - k), x)
+    wanted = x - target[k + 1] if rule == "tracking" else target[k] - target[k + 1]
+    return int(np.argmin(np.abs(candidates - wanted)))      # ties -> lower index (slower), deterministic
+
+
+def discretised_ac_policy(env: ExecutionEnv, cfg: dict, lam: float, rule: str = "tracking"):
+    """act(obs) -> action for evaluation loops. Reads the env's exact float64 state, not the float32 obs."""
+    target = ac_holdings(cfg, lam)
+    return lambda obs: discretised_ac_action(env, target, rule)
+
+
+def discretised_ac_holdings(cfg: dict, lam: float, rule: str = "tracking") -> tuple[np.ndarray, list[int]]:
+    """Holdings and actions of a discretised-AC policy. They do not depend on prices, so any path will do."""
+    env = ExecutionEnv(cfg, risk_aversion=lam)
+    N = env.N
+    env.reset(seed=0, options={"path": PricePath(np.zeros(N), np.zeros(N), np.full(N, 1.0 / N))})
+    act, actions, info = discretised_ac_policy(env, cfg, lam, rule), [], {}
+    for _ in range(N):
+        actions.append(act(None))
+        *_, info = env.step(actions[-1])
+    return info["holdings"], actions
+
+
 def all_baselines(cfg: dict, lam: float | None = None, volume_share=None) -> dict[str, np.ndarray]:
     N = cfg["market"]["n_steps"]
     vol = intraday_volume_profile(N) if volume_share is None else volume_share
@@ -135,4 +176,48 @@ if __name__ == "__main__":
     gap = np.abs(ac_holdings(cfg, 1e-9) - twap_holdings(N)).max()
     print(f"max |AC(lambda->0) - TWAP| holdings gap: {gap:.2e}")
     assert gap < 1e-6
+
+    # Check 4: discretised AC on the env's 12-action grid (valid, deterministic, close to AC, formulas agree).
+    print("\ndiscretised AC on the 12-action grid:")
+    M = env.multipliers
+    for rule in DISCRETE_AC_RULES:
+        h_ref, a_ref = discretised_ac_holdings(cfg, lam, rule)
+        assert all(0 <= a < len(M) for a in a_ref), "invalid action index"
+        assert np.all(np.diff(h_ref) <= 0) and h_ref.min() >= 0 and h_ref.max() <= 1, "holdings must fall within [0, 1]"
+        assert h_ref[0] == 1.0 and h_ref[-1] == 0.0, "must start with the full order and end fully liquidated"
+
+        # Grid approximation: the wanted trade lies inside the grid's range, and the chosen trade is the
+        # nearest grid point, i.e. within half the gap between the two grid trades that bracket it.
+        x = 1.0
+        for k in range(N - 1):
+            cand = np.minimum(M * x / (N - k), x)
+            wanted = x - ac[k + 1] if rule == "tracking" else ac[k] - ac[k + 1]
+            assert cand.min() <= wanted <= cand.max(), f"{rule}: AC trade at k={k} outside the action grid"
+            hi = np.searchsorted(np.sort(cand), wanted).clip(1, len(cand) - 1)
+            half_gap = 0.5 * (np.sort(cand)[hi] - np.sort(cand)[hi - 1])
+            assert abs(cand[a_ref[k]] - wanted) <= half_gap + 1e-12, f"{rule}: not the nearest grid trade at k={k}"
+            x -= cand[a_ref[k]]
+            assert abs(x - h_ref[k + 1]) < 1e-12
+
+        # Deterministic: the same actions on every price path; and stepping actions in the env gives
+        # exactly the cash flows of replaying the holdings schedule, so the closed forms apply.
+        sim_is = np.empty(len(paths))
+        for i, p in enumerate(paths):
+            env.reset(seed=0, options={"path": p})
+            act = discretised_ac_policy(env, cfg, lam, rule)
+            for k in range(N):
+                assert act(None) == a_ref[k], f"{rule}: actions depend on the price path"
+                *_, info = env.step(a_ref[k])
+            assert np.array_equal(info["holdings"], h_ref)
+            sim_is[i] = info["is_bps"]
+            if i < 200:
+                assert abs(run_schedule(env, h_ref, path=p)["is_bps"] - sim_is[i]) < 1e-9
+        mean_f, var_f = expected_cost_and_variance(h_ref, cfg)
+        ci = 1.96 * sim_is.std() / np.sqrt(len(sim_is))
+        assert abs(sim_is.mean() - mean_f) < 3 * ci and abs(sim_is.std() - np.sqrt(var_f)) <= 0.03 * np.sqrt(var_f)
+        j = ac_objective(h_ref, cfg, lam)
+        assert np.isfinite(j) and j >= j_ac - 1e-9, "a feasible schedule cannot beat AC on its own objective"
+        print(f"  {rule:<10} actions {a_ref[:-1]}  max|x-x_AC| {np.abs(h_ref - ac).max():.4f}  "
+              f"RMSE {np.sqrt(np.mean((h_ref[:-1] - ac[:-1]) ** 2)):.4f}  E[IS] {mean_f:.2f} (sim {sim_is.mean():.2f} "
+              f"± {ci:.2f})  objective {j:.3f} (AC {j_ac:.3f}, +{j - j_ac:.3f})")
     print("\nAll Day-1 sanity checks passed.")
