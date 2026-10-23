@@ -120,3 +120,24 @@ Rejected: bucketing by bar count (shifts clock time on gappy days; kept 2 trunca
 **D28 — Real-data split: train ≤ 2021-12-31, val = 2022, test ≥ 2023-01-01** · Done
 Per stock: 1,700 / 247 / 803 eligible days (all three stocks identical). Old split (train ≤ 2018, val H1 2019)
 left the post-2019 market regime only in test and a half-year val set. Test days are counted from timestamps only.
+
+**D29 — Experiment B + ablation statistics; signal rule as a reference row** · Done (implemented)
+20 runs: {DQN, PPO} × seeds 0–4 × observe-signal {on, off}, signal on, λ 25, 300k, D21 hyperparameters unchanged.
+Each agent is scored in an env with its own observe setting (ablation never sees the drift) on identical signal-on
+paths, with D24's paired per-seed CIs and across-seed t-intervals per arm. Extra: B − ablation per matched
+(algo, seed) on identical paths, across seeds as a matched t-interval (df 4, same training seed) plus the
+unmatched two-sample interval (df 8); signal-use slope = trade_k on z_k = μ_k/strength after removing each
+decision's mean trade (static schedules: 0); sd and CVaR 5% of IS; AC mean IS vs closed form as a bug check.
+Signal rule (0.5× TWAP pace if drift > 0 else 2×; D12) is a labelled heuristic reference, synthetic B only.
+Caveat: obs[3] (last price move) stays visible in the ablation, corr ≈ 0.30 with the current drift.
+
+**D30 — Real NSE evaluation protocol** · Done (implemented)
+All 30 agents (Exp A, B, ablation) vs AC, dAC-tracking, TWAP, VWAP-hist and Immediate on every eligible real day
+(D27/D28), impact simulated by the same AC model (no order-book data). σ stays at the config value for AC, the risk
+penalty and observation scaling. VWAP-hist = each stock's mean training-day volume profile. Real paths have no drift,
+so B agents see drift = 0: this tests transfer, not H2. Headline CI clusters by date (per-date mean over stocks,
+1.96 sd/√n_dates); stock-day CI and per-stock rows reported alongside. One manifest `results/expB_manifest.json`
+covers the 20 new + 10 Exp A checkpoints, code, config (incl. data split), raw-CSV SHA-256 and test-day counts;
+`--exp B --split test` verifies all of it before any test path or test day exists, runs synthetic B and real
+together in a staging folder and publishes only if both succeed. The Exp A manifest no longer verifies (code changed);
+Exp A results stay reproducible from `c9bdc57`.
