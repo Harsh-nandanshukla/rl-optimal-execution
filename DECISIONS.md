@@ -107,3 +107,16 @@ commit manifest → test once. Re-running on unchanged frozen files reproduces, 
 **D26 — `evaluate.py` moved from Day 6 to Day 3** · Done
 Evaluation code (and its test-set guard) is written and self-checked before any expensive training, so the
 held-out evaluation is a fixed procedure rather than a script written after seeing results.
+
+**D27 — Real data: clock-time buckets, finished-bar edge prices, full-session filter** · Done
+Bars are labelled by START (bar t covers [t, t+1 min)). Edges e_k = 09:15 + 15k min (k = 0..25, e_25 = 15:30). Arrival
+= open of the 09:15 bar; price at e_k = close of the last bar FINISHED by e_k (start + 1 min ≤ e_k; earlier bar if a
+minute is missing, never a later one), so e_25 = close of the 15:29 bar. Interval volume = bars starting in
+[e_k, e_k+1). Day kept only with a 09:15 bar (valid open), a 15:29:00 bar and ≥1 bar per interval; out-of-session
+bars ignored. VWAP uses each stock's mean interval-volume share over TRAINING days (stored in every real path),
+never the day's own volume. `CSVPathSampler(split="test")` raises `TestSplitLocked` unless `allow_test=True`.
+Rejected: bucketing by bar count (shifts clock time on gappy days; kept 2 truncated days, audit 22 Oct).
+
+**D28 — Real-data split: train ≤ 2021-12-31, val = 2022, test ≥ 2023-01-01** · Done
+Per stock: 1,700 / 247 / 803 eligible days (all three stocks identical). Old split (train ≤ 2018, val H1 2019)
+left the post-2019 market regime only in test and a half-year val set. Test days are counted from timestamps only.

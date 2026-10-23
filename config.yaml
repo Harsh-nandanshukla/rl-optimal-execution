@@ -27,8 +27,8 @@ actions:
 
 data:
   csv_dir: data/raw      # NSE 1-minute OHLCV CSVs (see README for the Kaggle source)
-  train_until: "2018-12-31"
-  val_until: "2019-06-30"   # everything after this date is the held-out test set
+  train_until: "2021-12-31"
+  val_until: "2022-12-31"   # everything after this date (2023-01-01 on) is the held-out test set
 
 evaluation:
   # Fixed synthetic path sets for scoring policies (realised IS, unscaled bps). The seeds are far
