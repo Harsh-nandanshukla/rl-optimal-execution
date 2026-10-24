@@ -1,0 +1,62 @@
+{
+  "experiment": "B",
+  "split": "test",
+  "path_seed": 200000,
+  "n_paths": 10000,
+  "models_dir": "models",
+  "runs": [
+    "dqn_synth_sigon_obson_lam25_300k_s0",
+    "dqn_synth_sigon_obson_lam25_300k_s1",
+    "dqn_synth_sigon_obson_lam25_300k_s2",
+    "dqn_synth_sigon_obson_lam25_300k_s3",
+    "dqn_synth_sigon_obson_lam25_300k_s4",
+    "ppo_synth_sigon_obson_lam25_300k_s0",
+    "ppo_synth_sigon_obson_lam25_300k_s1",
+    "ppo_synth_sigon_obson_lam25_300k_s2",
+    "ppo_synth_sigon_obson_lam25_300k_s3",
+    "ppo_synth_sigon_obson_lam25_300k_s4",
+    "dqn_synth_sigon_obsoff_lam25_300k_s0",
+    "dqn_synth_sigon_obsoff_lam25_300k_s1",
+    "dqn_synth_sigon_obsoff_lam25_300k_s2",
+    "dqn_synth_sigon_obsoff_lam25_300k_s3",
+    "dqn_synth_sigon_obsoff_lam25_300k_s4",
+    "ppo_synth_sigon_obsoff_lam25_300k_s0",
+    "ppo_synth_sigon_obsoff_lam25_300k_s1",
+    "ppo_synth_sigon_obsoff_lam25_300k_s2",
+    "ppo_synth_sigon_obsoff_lam25_300k_s3",
+    "ppo_synth_sigon_obsoff_lam25_300k_s4"
+  ],
+  "baselines": [
+    "AC",
+    "dAC-tracking",
+    "dAC-open-loop",
+    "TWAP",
+    "VWAP",
+    "Immediate",
+    "Signal rule"
+  ],
+  "definitions": "* objective      = is_bps + risk_bps per path (realised IS + realised lambda-weighted risk penalty) = -return.\n                   For a static schedule its mean estimates E[IS] + lambda Var[IS]. For an adaptive policy the\n                   pathwise penalty lambda sigma^2 tau sum x_k^2 is NOT the variance of realised IS (sd is reported too).\n* paired gap     = mean over paths of (objective_RL - objective_ref) on identical paths; 95% CI = 1.96 sd / sqrt(n).\n                   Answers: is THIS trained agent better or worse than the reference, beyond price-path noise?\n* across seeds   = mean, sd (ddof 1) and t-interval mean +- t(0.975, n-1) sd / sqrt(n) of the per-seed means.\n                   Answers: what should we expect from re-running training? With n = 5 seeds it is wide, honestly so.\n* trajectory     = normalised inventory x_k before each of the N = 25 decisions (k = 0..24), error e_ik = x_ik - ref_k.\n                   RMSE^2 = mean_ik e^2 = bias^2 + dispersion^2, with bias^2 = mean_k (mean_i e_ik)^2 (systematic shape\n                   error) and dispersion^2 = mean_k var_i(e_ik) (path-to-path reaction, ddof 0).\n* CVaR 5% of IS  = mean of the ceil(0.05 n) largest is_bps values.\n* capture        = (obj_TWAP - obj_RL) / (obj_TWAP - obj_AC), means over the same paths; 1 = all of AC's gain over TWAP.\n* signal rule    = reference heuristic (Exp B only, D12): TWAP pace x0.5 while the observed drift is > 0, x2 otherwise.\n* signal slope   = least-squares slope of trade_k (% of the order) on the standardised drift z_k = mu_k / strength,\n                   k = 0..N-2, after subtracting each decision's mean trade over paths (the schedule's shape is not\n                   signal use). Negative = sells less when the price is expected to rise. Static schedules: exactly 0.\n* B - ablation   = per matched (algo, seed): paired per-path objective difference, 95% CI over paths. Across seeds:\n                   the per-seed differences, mean +- t(0.975, n-1) sd / sqrt(n) (matched: same training seed); also\n                   the unmatched two-sample interval, pooled sd, t(0.975, 2n-2).\n* real gaps      = paired per stock-day. Headline 95% CI clusters by DATE: the per-date mean difference over stocks,\n                   1.96 sd / sqrt(n_dates) (stocks on one date share market moves). Stock-day CI reported alongside.\n* VWAP-hist      = VWAP on each stock's mean interval-volume profile over TRAINING days (never the day's own volume).",
+  "caution": null,
+  "signal": {
+    "enabled": true,
+    "strength": 0.04,
+    "phi": 0.8,
+    "obs_noise": 0.0
+  },
+  "ac_formula_check": {
+    "ac_is_formula": 30.51695278792144,
+    "ac_is_sim": 30.720444058822014,
+    "ac_is_ci95": 2.3762753499997458,
+    "within_3ci": true
+  },
+  "notes": "ablation agents are evaluated with the drift hidden, as trained; obs[3] (last price move) stays visible to every agent and is correlated ~0.30 with the current drift",
+  "versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "PyYAML": "6.0.3",
+    "gymnasium": "1.4.0",
+    "matplotlib": "3.11.2",
+    "torch": "2.14.1",
+    "stable_baselines3": "2.9.0"
+  }
+}
