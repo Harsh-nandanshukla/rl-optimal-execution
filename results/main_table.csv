@@ -1,0 +1,13 @@
+strategy,quantity,expA_mean,expA_ci95,expB_mean,expB_ci95,real_mean,real_ci95
+"AC (closed form), objective",objective,49.3389,1.69346,49.2533,2.37628,55.2339,4.30885
+AC on the action grid,gap_vs_AC,0.264899,0.0109245,0.266169,0.0112753,0.300891,0.0411657
+TWAP,gap_vs_AC,7.59743,0.613956,7.59481,0.90158,8.24039,1.1756
+VWAP,gap_vs_AC,,,7.22859,0.896424,11.8415,1.23372
+Signal rule (heuristic),gap_vs_AC,,,-9.85076,0.796742,,
+Immediate,gap_vs_AC,451.161,1.69346,451.247,2.37628,445.266,5.08463
+"DQN, Exp A agent",gap_vs_AC,0.141065,0.0392466,,,0.14591,0.0994949
+"PPO, Exp A agent",gap_vs_AC,0.174777,0.0720313,,,0.169082,0.0859584
+"DQN, signal observed",gap_vs_AC,,,-13.9422,1.15753,8.75341,5.38037
+"PPO, signal observed",gap_vs_AC,,,-15.0103,0.993259,2.21658,0.903085
+"DQN, signal hidden (ablation)",gap_vs_AC,,,1.06894,0.51139,2.2208,0.476985
+"PPO, signal hidden (ablation)",gap_vs_AC,,,0.69594,0.901717,2.58486,0.650652
