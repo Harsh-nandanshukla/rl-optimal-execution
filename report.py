@@ -129,7 +129,7 @@ def legend_above(ax, handles: list, ncol: int = 3) -> None:
               columnspacing=1.0, handlelength=1.8, borderaxespad=0.2)
 
 
-def seed_handles(plt, arms: list[str]) -> list:
+def seed_handles(arms: list[str]) -> list:
     from matplotlib.lines import Line2D
     labels = {"A": "Exp A agent", "B": "signal observed", "abl": "signal hidden (ablation)"}
     out = [Line2D([], [], marker=MARKERS[a][0], ls="", color="#52514e", ms=3.5,
@@ -157,7 +157,7 @@ def fig2_signal(d: dict, out_dir: str, plt) -> list[str]:
     legend_above(ax, [Line2D([], [], color=COLORS["AC"], lw=0.9, label="AC"),
                       Line2D([], [], color=COLORS["TWAP"], ls=":", lw=1.2, label="TWAP"),
                       Line2D([], [], color=COLORS["rule"], ls="--", lw=1.0, label="signal rule (heuristic)")]
-                 + seed_handles(plt, ["B", "abl"]))
+                 + seed_handles(["B", "abl"]))
     fig.tight_layout(pad=0.4)
     out = save(fig, out_dir, "fig2_expB_signal")
     plt.close(fig)
@@ -188,7 +188,7 @@ def fig3_real(d: dict, out_dir: str, plt) -> list[str]:
     legend_above(ax, [Line2D([], [], color=COLORS["AC"], lw=0.9, label="AC"),
                       Line2D([], [], color=COLORS["TWAP"], ls=":", lw=1.2, label="TWAP"),
                       Line2D([], [], color=COLORS["VWAP"], ls="--", lw=1.0, label="VWAP (hist. profile)"),
-                      seed_handles(plt, [])[-1]], ncol=4)
+                      seed_handles([])[-1]], ncol=4)
     fig.tight_layout(pad=0.4)
     out = save(fig, out_dir, "fig3_real_transfer")
     plt.close(fig)
@@ -336,7 +336,7 @@ def self_check() -> None:
         for f in figs:
             assert os.path.getsize(f) > 10_000, f
             if f.endswith(".png"):
-                h, w = mpimg.imread(f).shape[:2]
+                w = mpimg.imread(f).shape[1]
                 assert w == round(COL_IN * DPI), (f, w)
         # 2. Agent cells equal mean and t-interval recomputed from the per-seed rows.
         t = pd.read_csv(os.path.join(res_tmp, "main_table.csv"))
