@@ -1,5 +1,9 @@
 # Optimal Execution of Large NSE Equity Orders using Deep Reinforcement Learning
 
+Team: Harsh Nandan Shukla (B23MT1019), Arush Aaron John (B23CH1009) — IIT Jodhpur, AI course Assignment 2
+
+Report: [report.pdf](report.pdf)
+
 A fund must sell a large block of shares before the market closes. Selling fast moves the price against it
 (market impact); selling slowly leaves it exposed to price risk. We cast this as a 25-step MDP (one decision
 per 15-minute interval) and train two RL agents, a DQN written from scratch in PyTorch and PPO
@@ -11,6 +15,30 @@ hypotheses on held-out data, each evaluated once after a hash-verified freeze:
 
 On real NSE price paths from 2023 to 2026, the random-walk agents match AC and beat TWAP and historical VWAP.
 The signal-trained agents do not transfer: real paths carry no such signal, and they lose 2–9 bps to AC.
+
+## Quick start (≈5 min, no training, no data needed)
+
+Every command below was run in a fresh clone with no `data/raw/`. The times were measured on our laptop
+(one CPU core) and don't include the package install, which downloads torch.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1                 # bash: source .venv/bin/activate
+pip install -r requirements.txt              # torch CPU build: see the comment in requirements.txt
+python data.py; python env.py; python train.py --self-check; python report.py --self-check   # ~25 s
+python evaluate.py --exp B                   # ~3.5 min
+```
+
+- The self-checks print `... self-check passed` and exit 0.
+- `python evaluate.py --exp B` scores the 20 committed Exp B and ablation agents against AC, TWAP, VWAP and the
+  signal rule on 1,000 synthetic validation paths, all on identical paths. It writes tables and a figure to
+  `logs/expB_val/` and ends with `AC mean IS 35.47 ± 7.66 vs closed form 30.52`.
+- These are validation numbers: the same paths selected the checkpoints, so they are optimistic. The reported
+  results are the held-out test numbers below.
+- Three slower self-checks also need no data: `python baselines.py` (~1 min), `python dqn.py` (~2 min) and
+  `python evaluate.py --self-check` (~2 min).
+- Only `python evaluate.py --exp real`, `python train.py --mode real` and `--exp B --split test` need the CSVs
+  (see Setup).
 
 ## Headline results (held-out test sets)
 
@@ -91,7 +119,9 @@ python dqn.py; python train.py --self-check; python evaluate.py --self-check; py
 **2. Training** (300k steps per run, about 10 min alone on one CPU core). Set `OMP_NUM_THREADS`,
 `MKL_NUM_THREADS` and `OPENBLAS_NUM_THREADS` to 1, and run seeds as separate processes (≤ 5 at a time). Each run
 saves its best checkpoint, selected on 1,000 validation paths, to `models/<run>.{pt,zip}` with `.json`
-metadata, and writes its learning curve to `logs/<run>.csv`.
+metadata, and writes its learning curve to `logs/<run>.csv`. The commands are written for PowerShell and work
+the same in bash. Only the environment-variable syntax differs: `$env:OMP_NUM_THREADS='1'` in PowerShell,
+`export OMP_NUM_THREADS=1` in bash.
 
 ```powershell
 # Experiment A (10 runs): random walk
@@ -144,6 +174,7 @@ changed for Exp B.
 | `results/` | test outputs: summaries, per-seed aggregates, per-path data, trajectories, manifests, main table |
 | `figures/` | `fig1`–`fig4` for the report (300-dpi PNG + PDF), plus the figures `evaluate.py` wrote at test time |
 | `DECISIONS.md` | every design decision, with the reasoning |
+| `report.pdf` | the 2-page report |
 
 ## Limitations
 
