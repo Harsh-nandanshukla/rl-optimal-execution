@@ -141,3 +141,10 @@ covers the 20 new + 10 Exp A checkpoints, code, config (incl. data split), raw-C
 `--exp B --split test` verifies all of it before any test path or test day exists, runs synthetic B and real
 together in a staging folder and publishes only if both succeed. The Exp A manifest no longer verifies (code changed);
 Exp A results stay reproducible from `c9bdc57`.
+
+**D31 — Report figures and table in a separate `report.py`** · Done (implemented, approved 24 Oct)
+A 7th file, approved by Harsh, so that `evaluate.py` stays byte-identical to the Exp B freeze (the manifest
+still verifies at HEAD). It reads only committed `results/` CSVs, imports no env, agent or evaluation code
+(its self-check asserts this) and writes `figures/fig1`–`fig4` (3.4 in single column, 300 dpi) and
+`results/main_table.{csv,md}`. Learning curves are copied from gitignored `logs/` into the committed
+`results/expA_learning_curves.csv`. Off-scale points are labelled, not clipped silently.
