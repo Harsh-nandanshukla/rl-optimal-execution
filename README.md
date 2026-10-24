@@ -68,8 +68,9 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-**Data (real-data parts only).** NSE 1-minute OHLCV bars from Kaggle: [dataset URL — to be added]. Put the
-three files in `data/raw/` (gitignored). The freeze manifest records their SHA-256, so a different copy is
+**Data (real-data parts only).** NSE 1-minute OHLCV bars from Kaggle,
+[Stock Market Data – Nifty 50 stocks (1 min) data](https://www.kaggle.com/datasets/debashis74017/stock-market-data-nifty-50-stocks-1-min-data).
+Put the three files used in `data/raw/` (gitignored). The freeze manifest records their SHA-256, so a different copy is
 detected before any test day is used:
 - `ADANIPORTS_minute.csv` (`653097eb01a49fcf…`)
 - `BAJAJ-AUTO_minute.csv` (`b5d3f44bcf2671da…`)
